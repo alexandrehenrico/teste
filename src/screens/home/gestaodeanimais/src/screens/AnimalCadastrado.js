@@ -8,8 +8,9 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Picker } from '@react-native-picker/picker';
 import { Checkbox } from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
+import { useData } from '../../../DataContext';
 
-export default class AnimaisCadastrados extends Component {
+class AnimaisCadastrados extends Component {
     state = {
         cadastrados: [],
         showCadAnimal: false,
@@ -32,10 +33,8 @@ export default class AnimaisCadastrados extends Component {
     async componentDidMount() {    
         this.focusListener = this.props.navigation.addListener('focus', () => {
             this.loadCadastrados();
-            this.loadProperties();
         });
         await this.loadCadastrados();   
-        await this.loadProperties(); 
     }
 
     componentWillUnmount() {
@@ -43,15 +42,6 @@ export default class AnimaisCadastrados extends Component {
             this.focusListener();
         }
     }  
-loadProperties = async () => {
-  try {
-    const snapshot = await firestore().collection('propriedades').get();
-    const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    this.setState({ properties: fetched });
-  } catch (error) {
-    console.error('Erro ao buscar propriedades:', error);
-  }
-};
 
 
 
@@ -361,6 +351,7 @@ loadCadastrados = async () => {
                         isVisible={this.state.showCadAnimal}
                         onCancel={() => this.setState({ showCadAnimal: false })}
                         onSave={this.AddCadastro}
+                        globalProperties={this.props.globalProperties}
                     />
         
                     <View style={styles.summaryContainer}>
@@ -457,8 +448,8 @@ loadCadastrados = async () => {
                                                 style={{ width: '100%' }}
                                             >
                                                 <Picker.Item label="Selecione uma propriedade" value="" />
-                                                {this.state.properties.length > 0 ? (
-                                                    this.state.properties.map((property, index) => (
+                                                {this.props.globalProperties && this.props.globalProperties.length > 0 ? (
+                                                    this.props.globalProperties.map((property, index) => (
                                                         <Picker.Item key={index} label={property.name} value={property.name} />
                                                     ))
                                                 ) : (
@@ -553,7 +544,7 @@ loadCadastrados = async () => {
                                                 style={styles.picker}
                                             >
                                                 <Picker.Item label="Todas" value="" />
-                                                {this.state.properties.map((property, index) => (
+                                                {this.props.globalProperties && this.props.globalProperties.map((property, index) => (
                                                     <Picker.Item key={index} label={property.name} value={property.name} />
                                                 ))}
                                             </Picker>
@@ -576,6 +567,11 @@ loadCadastrados = async () => {
         );
     }}
 
+// Wrapper funcional para usar o Context
+export default function AnimaisCadastradosWrapper(props) {
+  const { properties } = useData();
+  return <AnimaisCadastrados {...props} globalProperties={properties} />;
+}
 const styles = StyleSheet.create({
     container: {
         flex: 1,

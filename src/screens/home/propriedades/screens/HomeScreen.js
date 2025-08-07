@@ -12,11 +12,13 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { FontAwesome } from '@expo/vector-icons';
+import { useData } from '../../DataContext';
 
 export default function HomeScreen({ navigation, route }) {
   const [properties, setProperties] = useState([]);
   const [summary, setSummary] = useState({ totalProperties: 0, totalArea: 0 });
   const [isLoading, setIsLoading] = useState(false);
+  const { properties: globalProperties } = useData();
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', loadProperties);
@@ -36,7 +38,7 @@ const loadProperties = async () => {
   try {
     const currentUser = auth().currentUser;
     const propertySnapshot = await firestore()
-      .collection('properties')
+      .collection('propriedades')
       .where('userId', '==', currentUser.uid)
       .get();
 
@@ -95,7 +97,7 @@ const loadProperties = async () => {
           style: 'destructive',
           onPress: async () => {
   try {
-    await firestore().collection('properties').doc(property.id).delete();
+    await firestore().collection('propriedades').doc(property.id).delete();
     const updatedProperties = properties.filter(p => p.id !== property.id);
     setProperties(updatedProperties);
     calculateSummary(updatedProperties);

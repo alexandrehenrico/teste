@@ -12,23 +12,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker'; // Para o dropdown
 import firestore from '@react-native-firebase/firestore';
+import { useData } from '../DataContext';
 
-export default function AddEditScreen({ route, navigation }) {
   const { record, index } = route.params || {};
-  const [data, setData] = useState(record ? new Date(record.data) : new Date());
-  const [origem, setOrigem] = useState(record ? record.origem : '');
-  const [valor, setValor] = useState(record ? record.valor.toFixed(2).replace('.', ',') : '');
-  const [pagador, setPagador] = useState(record ? record.pagador : '');
-  const [data2, setData2] = useState(record ? new Date(record.data2) : new Date());
-  const [pagamento, setPagamento] = useState(record ? record.pagamento : '');
-  const [selectedProperty, setSelectedProperty] = useState(record ? record.propertyId : '');
-  const [properties, setProperties] = useState([]); // Propriedades existentes
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showDatePicker2, setShowDatePicker2] = useState(false);
-
-  useEffect(() => {
-    loadProperties();
-  }, []);
 
   const loadProperties = async () => {
   try {

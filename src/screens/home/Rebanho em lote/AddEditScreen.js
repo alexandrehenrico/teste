@@ -13,31 +13,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import firestore from '@react-native-firebase/firestore';
+import { useData } from '../DataContext';
 
 export default function AddEditScreen({ route, navigation, addRecord, editRecord }) {
   const { record, index } = route.params || {};
+  const { properties } = useData();
   const [datainicio, setDatainicio] = useState(record ? new Date(record.datainicio) : new Date());
   const [quant, setQuant] = useState(record?.quant ? String(Number(record.quant)) : '');
   const [peso, setPeso] = useState(record ? record.peso : '');
   const [categoria, setCategoria] = useState(record ? record.categoria : '');
   const [selectedProperty, setSelectedProperty] = useState(record ? record.propertyId : '');
-  const [properties, setProperties] = useState([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDatePicker2, setShowDatePicker2] = useState(false);
 
-  useEffect(() => {
-    loadProperties();
-  }, []);
-
-const loadProperties = async () => {
-  try {
-    const snapshot = await firestore().collection('propriedades').get();
-    const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setProperties(fetched);
-  } catch (error) {
-    console.error('Erro ao buscar propriedades:', error);
-  }
-};
 
 
   const handleSave = async () => {

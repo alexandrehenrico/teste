@@ -18,6 +18,7 @@ import { TextInputMask } from 'react-native-masked-text';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import firestore from '@react-native-firebase/firestore';
+import { useData } from '../../../DataContext';
 
 const racas = [
     { label: 'ABERDEEN', value: 'ABERDEEN' },
@@ -71,9 +72,13 @@ export default class CadAnimal extends Component {
     
     state = {...initialState}
 
+    constructor(props) {
+        super(props);
+        // Bind do contexto se necessário
+    }
 
    componentDidMount() {
-  this.loadProperties();
+  this.loadPropertiesFromContext();
 
   const { animal } = this.props;
   if (animal) {
@@ -91,9 +96,26 @@ export default class CadAnimal extends Component {
 }
 
 
-loadProperties = async () => {
+loadPropertiesFromContext = () => {
+  // Usar propriedades do contexto global se disponível
+  if (this.props.globalProperties && this.props.globalProperties.length > 0) {
+    this.setState({ properties: this.props.globalProperties });
+  } else {
+    // Fallback: carregar diretamente do Firestore
+    this.loadPropertiesFromFirestore();
+  }
+};
+
+loadPropertiesFromFirestore = async () => {
   try {
-    const snapshot = await firestore().collection('propriedades').get();
+    const currentUser = auth().currentUser;
+    if (!currentUser) return;
+
+    const snapshot = await firestore()
+      .collection('propriedades')
+      .where('userId', '==', currentUser.uid)
+      .get();
+    
     const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     this.setState({ properties: fetched });
   } catch (error) {

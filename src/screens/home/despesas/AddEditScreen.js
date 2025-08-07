@@ -5,32 +5,18 @@ import { Picker } from '@react-native-picker/picker'; // Adicione essa bibliotec
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import { useData } from '../DataContext';
 
 export default function AddEditScreen({ route, navigation, addRecord, editRecord }) {
   const { record, index } = route.params || {};
-  const [selectedProperty, setSelectedProperty] = useState(record ? record.property : null); // Estado para a propriedade selecionada
-  const [properties, setProperties] = useState([]); // Lista de propriedades
+  const { properties } = useData();
+  const [selectedProperty, setSelectedProperty] = useState(record ? record.property : null);
   const [descricao, setDescricao] = useState(record ? record.descricao : '');
   const [valor, setValor] = useState(record ? record.valor.toFixed(2).replace('.', ',') : '');
   const [data, setData] = useState(record ? new Date(record.data) : new Date());
   const [formaPagamento, setFormaPagamento] = useState(record ? record.formaPagamento : '');
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  useEffect(() => {
-    // Carregar as propriedades do AsyncStorage
-    const loadProperties = async () => {
-  try {
-    const snapshot = await firestore().collection('propriedades').get();
-    const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setProperties(fetched);
-  } catch (error) {
-    console.error('Erro ao buscar propriedades:', error);
-  }
-};
-
-
-    loadProperties();
-  }, []);
 
 const handleSave = async () => {
   if (!descricao || !valor || !data || !formaPagamento || !selectedProperty) {
@@ -45,7 +31,7 @@ const handleSave = async () => {
   }
 
   const newRecord = {
-    property: selectedProperty.name,
+    property: typeof selectedProperty === 'object' ? selectedProperty.name : selectedProperty,
     descricao,
     valor: parseCurrency(valor),
     data: firestore.Timestamp.fromDate(data),
@@ -107,7 +93,7 @@ const handleSave = async () => {
         >
           <Picker.Item label="Selecione uma propriedade" value={null} />
           {properties.map((property, idx) => (
-            <Picker.Item key={idx} label={property.name} value={property} />
+          <Picker.Item key={idx} label={property.name} value={property.name} />
           ))}
         </Picker>
       </View>

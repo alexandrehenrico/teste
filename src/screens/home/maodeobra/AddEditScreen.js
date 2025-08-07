@@ -4,32 +4,19 @@ import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import firestore from '@react-native-firebase/firestore';
+import { useData } from '../DataContext';
 
 export default function AddEditScreen({ route, navigation, addRecord, editRecord }) {
   const { record, index } = route.params || {};
+  const { properties } = useData();
   const [nome, setNome] = useState(record ? record.nome : '');
   const [descricao, setDescricao] = useState(record ? record.descricao : '');
   const [valor, setValor] = useState(record ? record.valor.toFixed(2).replace('.', ',') : '');
   const [data, setData] = useState(record ? new Date(record.data) : new Date());
   const [formaPagamento, setFormaPagamento] = useState(record ? record.formaPagamento : '');
   const [selectedProperty, setSelectedProperty] = useState(record ? record.property : '');
-  const [properties, setProperties] = useState([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  useEffect(() => {
-    const loadProperties = async () => {
-  try {
-    const snapshot = await firestore().collection('propriedades').get();
-    const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setProperties(fetched);
-  } catch (error) {
-    console.error('Erro ao buscar propriedades:', error);
-  }
-};
-
-
-    loadProperties();
-  }, []);
 
   const handleSave = () => {
     if (!nome || !valor || !data || !formaPagamento || !descricao || !selectedProperty ) {
@@ -57,13 +44,11 @@ export default function AddEditScreen({ route, navigation, addRecord, editRecord
 } else {
   // Adicionar
   // Adicionar mão de obra dentro da subcoleção da propriedade selecionada
-firestore()
-  .collection('propriedades')
-  .doc(selectedProperty) // ID da propriedade selecionada no Picker
-  .collection('maoDeObra')
-  .add(newRecord)
-  .then(() => navigation.goBack())
-  .catch(() => Alert.alert('Erro', 'Falha ao salvar registro.'));
+      firestore()
+        .collection('maoDeObra')
+        .add(newRecord)
+        .then(() => navigation.goBack())
+        .catch(() => Alert.alert('Erro', 'Falha ao salvar registro.'));
 }
 
   };

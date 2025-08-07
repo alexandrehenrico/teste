@@ -13,10 +13,12 @@ import {
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import styles from '../../../home/propriedades/screens/AddPropertyScreen.style.js';
+import { useData } from '../../DataContext';
 
 
 export default function AddPropertyScreen({ navigation, route }) {
   const { property, index, refresh } = route.params || {};
+  const { setProperties } = useData();
 
   const [form, setForm] = useState({
     name: '',
@@ -69,12 +71,12 @@ const saveProperty = async () => {
     };
 
     if (property && property.id) {
-      await firestore().collection('properties').doc(property.id).update(newData);
+      await firestore().collection('propriedades').doc(property.id).update(newData);
     } else {
-      await firestore().collection('properties').add(newData);
+      await firestore().collection('propriedades').add(newData);
     }
 
-    await refresh(); // atualiza a lista na Home
+    if (refresh) await refresh(); // atualiza a lista na Home
     navigation.navigate('Home', { updated: true });
   } catch (error) {
     console.error('Erro ao salvar propriedade:', error);

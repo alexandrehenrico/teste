@@ -11,6 +11,7 @@ import PlanCard from './PlanCard';
 import { Linking } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore'; 
+import { useData } from '../DataContext';
 
 const openURL = async (url) => {
   const supported = await Linking.canOpenURL(url);
@@ -60,6 +61,7 @@ const STORAGE_KEYS = {
 const ProfileScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
+  const { properties } = useData();
 
   const [profileImage, setProfileImage] = useState(
     'https://cdn-icons-png.flaticon.com/256/847/847969.png'
@@ -68,7 +70,6 @@ const ProfileScreen = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState('');
-  const [properties, setProperties] = useState([]);
 
   useEffect(() => {
     
@@ -84,19 +85,8 @@ const ProfileScreen = () => {
       }
     };
 
-    const loadProperties = async () => {
-  try {
-    const snapshot = await firestore().collection('propriedades').get();
-    const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setProperties(fetched);
-  } catch (error) {
-    console.error('Erro ao buscar propriedades:', error);
-  }
-};
-
 
     loadProfileData();
-    loadProperties();
   }, []);
 
   const saveProfileData = async () => {
