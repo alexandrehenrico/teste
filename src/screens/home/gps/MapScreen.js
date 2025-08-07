@@ -16,10 +16,8 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { getUUID } from "../../../utils/randomId";
 import * as FileSystem from 'expo-file-system';
 import { styles } from "./MapScreenStyles";
-import { getAuth } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore"; 
-import { db } from "../../../services/firebaseConfig";
-import { alertFirebaseErrors } from "../../../utils/alerts";
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import COLLECTIONS_KEYS from "../../../constants/collections";
 
 const DEFAULT_REGION = {
@@ -43,7 +41,7 @@ const MapScreen = ({ navigation, route }) => {
   const [conversionModalVisible, setConversionModalVisible] = useState(false);
   const mapRef = useRef(null);
 
-  const loggedUser =  getAuth().currentUser;
+  const loggedUser = auth().currentUser;
 
   useEffect(() => {
     const requestLocationPermission = async () => {
@@ -187,15 +185,13 @@ const toggleMapLayer = () => {
       id: areaRecordId,
       name: areaName.trim(), 
       coords: polygonCoords,
-      area
+      area,
+      owner: loggedUser.uid,
+      updatedAt: new Date(),
     };
 
     try {
-      await setDoc(doc(db, COLLECTIONS_KEYS.POLYGONS, areaRecordId), {
-        ...areaRecord,
-        owner: loggedUser.uid,
-        updatedAt: new Date(),
-      });
+      await firestore().collection(COLLECTIONS_KEYS.POLYGONS).doc(areaRecordId).set(areaRecord);
 
       Alert.alert('Sucesso', 'Área salva com sucesso.');
 
@@ -204,8 +200,8 @@ const toggleMapLayer = () => {
       
       navigation.navigate("Home", { newArea: true });
     } catch (error) {
-      let message = "Não foi possível salvar a área.";
-      alertFirebaseErrors(Alert, message, error);
+      console.error('Erro ao salvar área:', error);
+      Alert.alert('Erro', 'Não foi possível salvar a área.');
     }
   };
 

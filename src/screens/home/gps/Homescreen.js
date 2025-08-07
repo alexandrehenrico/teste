@@ -13,14 +13,12 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { FontAwesome } from "@expo/vector-icons";
-import { getAuth } from "firebase/auth";
-import { collection, query, where, getDocs, doc, deleteDoc } from "firebase/firestore";
-import { db } from "../../../services/firebaseConfig";
-import { alertFirebaseErrors } from "../../../utils/alerts";
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import COLLECTIONS_KEYS from "../../../constants/collections";
 
 export default function HomeScreen({ route, navigation }) {
-  const loggedUser =  getAuth().currentUser;
+  const loggedUser = auth().currentUser;
 
   const [polygons, setPolygons] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -29,20 +27,22 @@ export default function HomeScreen({ route, navigation }) {
   const loadPolygons = useCallback(async () => {
     setIsLoading(true);
     try {
-      const q = query(collection(db, COLLECTIONS_KEYS.POLYGONS), where("owner", "==", loggedUser.uid));
-      const querySnapshot = await getDocs(q);
-      const parsedPolygons = querySnapshot?.docs?.map((doc) => doc.data());
+      const querySnapshot = await firestore()
+        .collection(COLLECTIONS_KEYS.POLYGONS)
+        .where("owner", "==", loggedUser.uid)
+        .get();
+      const parsedPolygons = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       const ordered = parsedPolygons.sort((a,b) => 
         new Date(b.updatedAt) - new Date(a.updatedAt)
       );
       setPolygons(ordered);
     } catch (error) {
-      let message = "Não foi possível carregar as áreas salvas.";
-      alertFirebaseErrors(Alert, message, error);
+      console.error('Erro ao carregar áreas:', error);
+      Alert.alert('Erro', 'Não foi possível carregar as áreas salvas.');
     } finally {
       setIsLoading(false);
     }
-  }, [loggedUser.id]);
+  }, [loggedUser.uid]);
 
   const deletePolygon = useCallback((id) => {
     Alert.alert(
@@ -54,13 +54,13 @@ export default function HomeScreen({ route, navigation }) {
           text: "Excluir",
           onPress: async () => {
             try {
-              await deleteDoc(doc(db, COLLECTIONS_KEYS.POLYGONS, id));              
+              await firestore().collection(COLLECTIONS_KEYS.POLYGONS).doc(id).delete();
               await loadPolygons();
 
               Alert.alert('Sucesso', 'Área deletada com sucesso.');
             } catch (error) {
-              let message = "Não foi possível deletar a área.";
-              alertFirebaseErrors(Alert, message, error);
+              console.error('Erro ao deletar área:', error);
+              Alert.alert('Erro', 'Não foi possível deletar a área.');
             }
           },
         },
